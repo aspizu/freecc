@@ -10,7 +10,7 @@ export const shell: Tool = {
   async execute(args: string[], body: string) {
     const out = await $`bash -c ${body} 2>&1`.nothrow().text();
     const lines = out.split("\n");
-    if (lines.length > 50) {
+    if (lines.length > 100) {
       return code(
         "I got the following output from the OS (last 100 lines):",
         lines.slice(-100).join("\n"),
