@@ -59,6 +59,7 @@ function updateButton() {
   const btn = document.getElementById("freecc-init");
   if (!btn) return;
   btn.classList.toggle("running", isRunning);
+  btn.textContent = isRunning ? "Stop FreeCC" : "Start FreeCC";
 }
 
 /**
@@ -121,9 +122,6 @@ div.innerHTML = `
     z-index: 99999999;
     bottom: 0;
     right: 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
     padding: 4px 6px;
     background: rgba(15, 15, 15, 0.85);
     backdrop-filter: blur(8px);
@@ -135,38 +133,28 @@ div.innerHTML = `
   }
 
   #freecc-init {
-    position: relative;
-    width: 44px;
-    height: 22px;
-    padding: 0;
+    padding: 3px 8px;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 11px;
+    border-radius: 4px;
     cursor: pointer;
+    color: #aaa;
+    font-family: monospace;
+    font-size: 11px;
     letter-spacing: 0.03em;
-    transition: background 0.2s;
-    &::after {
-      content: "";
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 16px;
-      height: 16px;
-      background: #888;
-      border-radius: 50%;
-      transition: transform 0.2s, background 0.2s;
+    transition: background 0.2s, color 0.2s;
+    &:hover {
+      background: rgba(255,255,255,0.12);
     }
     &.running {
-      background: #22c55e;
-      &::after {
-        transform: translateX(22px);
-        background: #fff;
-      }
+      background: rgba(34, 197, 94, 0.15);
+      border-color: rgba(34, 197, 94, 0.4);
+      color: #22c55e;
     }
   }
 </style>
 <div id="freecc-toolbar">
-  <button id="freecc-init" title="Toggle FreeCC session"></button>
+  <button id="freecc-init">Start FreeCC</button>
 </div>
 `;
 
