@@ -19,13 +19,13 @@ new Elysia()
       if (!toolcall) {
         return { skipped: true };
       }
-      if (!(toolcall.tool in tools)) {
+      const tool = tools[toolcall.tool];
+      if (!tool) {
         return {
           skipped: false,
           msg: `I got the following error from the OS:\n\`\`\`\nerror: ${toolcall.tool} is not a valid tool.\n\`\`\``,
         };
       }
-      const tool = tools[toolcall.tool];
       try {
         const msg = await tool.execute(toolcall.args, toolcall.body);
         console.log("sending: ", msg.slice(0, 50) + "...");

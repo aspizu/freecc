@@ -3,7 +3,7 @@ import { tools } from "./tool";
 const usages = (
   await Promise.all(
     Object.entries(tools).map(async ([name, tool]) => {
-      return ` - $toolbox.${name} => ${await tool.usage()}`;
+      return ` - ${await tool.usage()}`;
     }),
   )
 ).join("\n");

@@ -4,7 +4,7 @@ import type { Tool } from "../tool";
 
 export const shell: Tool = {
   async usage() {
-    return "Execute the body as a single bash command and return both stdout and stderr.";
+    return "$toolbox.shell() Executes the bash command in body and return stdout+stderr.";
   },
 
   async execute(args: string[], body: string) {

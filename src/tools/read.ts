@@ -3,7 +3,7 @@ import type { Tool } from "../tool";
 
 export const read: Tool = {
   async usage() {
-    return "Read the contents of the path in body, optional parameters: (skip: number, limit: number)";
+    return "$toolbox.read(skip?: number, limit?: number) Read the contents of the path given in body.";
   },
 
   async execute(args: any[], body: string) {

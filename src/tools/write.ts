@@ -3,7 +3,7 @@ import type { Tool } from "../tool";
 
 export const write: Tool = {
   async usage() {
-    return "Apply a git diff/patch to a file. Body should be the git diff content to apply.";
+    return "$toolbox.write() Apply git/diff patch. Body must be a valid git patch file content with path in it.";
   },
 
   async execute(args: any[], body: string) {
