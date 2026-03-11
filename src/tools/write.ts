@@ -12,6 +12,7 @@ export const write: Tool = {
     await Bun.write(tmpFile, body.trim());
 
     try {
+      await $`patch -p1 < ${tmpFile}`;
       return "Ran it.";
     } catch (err: any) {
       throw new Error(err.stderr?.toString());
