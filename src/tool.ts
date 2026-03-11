@@ -22,11 +22,11 @@ export interface Toolcall {
 
 export function parseToolcall(msg: string): Toolcall | null {
   msg = msg.trim();
-  if (msg.startsWith("````") && msg.endsWith("`````")) {
+  if (msg.startsWith("````") && msg.endsWith("````")) {
     msg = msg.slice(4, -4).trim();
   }
-  if (msg.startsWith("```") && msg.endsWith("````")) {
-    msg = msg.slice(4, -4).trim();
+  if (msg.startsWith("```") && msg.endsWith("```")) {
+    msg = msg.slice(3, -3).trim();
   }
   if (!msg.startsWith("$toolbox.")) {
     return null;
