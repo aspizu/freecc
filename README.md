@@ -1,15 +1,16 @@
-# freecc
+# FreeCC
 
-To install dependencies:
+Turns Claude Web into Claude Code.
 
-```bash
-bun install
-```
+## How it works
 
-To run:
+Userscript takes controls of the chatbox and communicates with the server.
 
-```bash
-bun run 
-```
+Server executes tool-calls and exposes the file-system to claude web.
 
-This project was created using `bun init` in bun v1.3.10. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+## How to use it
+
+Install the userscript and run the server in the root of the repository you wish to
+work inside.
+
+Start a new chat in Claude Web and use the toolbar to initialize a new FreeCC session.
