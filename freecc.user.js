@@ -29,13 +29,37 @@ async function getLastClaudeMessage() {
 
 /** @type {string | null} */
 let lastMsg = null;
-setInterval(async () => {
-  const msg = await getLastClaudeMessage();
-  if (msg && msg != lastMsg) {
-    onMessage(msg);
+/** @type {ReturnType<typeof setInterval> | null} */
+let intervalId = null;
+/** @type {boolean} */
+let isRunning = false;
+
+function startSession() {
+  intervalId = setInterval(async () => {
+    const msg = await getLastClaudeMessage();
+    if (msg && msg != lastMsg) {
+      onMessage(msg);
+    }
+    lastMsg = msg;
+  }, 5000);
+  isRunning = true;
+  updateButton();
+}
+
+function stopSession() {
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
   }
-  lastMsg = msg;
-}, 5000);
+  isRunning = false;
+  updateButton();
+}
+
+function updateButton() {
+  const btn = document.getElementById("freecc-init");
+  if (!btn) return;
+  btn.classList.toggle("running", isRunning);
+}
 
 /**
  * @param {string} text
@@ -98,24 +122,61 @@ div.innerHTML = `
     bottom: 0;
     right: 0;
     display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    background: rgba(15, 15, 15, 0.85);
+    backdrop-filter: blur(8px);
+    border-top-left-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-right: none;
+    border-bottom: none;
     font-family: monospace;
   }
 
   #freecc-init {
-    padding: 8px;
-    background-color: red;
-    &:hover {
-      background-color: green;
+    position: relative;
+    width: 44px;
+    height: 22px;
+    padding: 0;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 11px;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.2s;
+    &::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #888;
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    &.running {
+      background: #22c55e;
+      &::after {
+        transform: translateX(22px);
+        background: #fff;
+      }
     }
   }
 </style>
 <div id="freecc-toolbar">
-  <button id="freecc-init">new FreeCC session</button>
+  <button id="freecc-init" title="Toggle FreeCC session"></button>
 </div>
 `;
 
 document.getElementById("freecc-init")?.addEventListener("click", async () => {
-  const response = await fetch("http://localhost:3000/init");
-  const prompt = await response.text();
-  await sendMsg(prompt, /* send */ false);
+  if (isRunning) {
+    stopSession();
+  } else {
+    const response = await fetch("http://localhost:3000/init");
+    const prompt = await response.text();
+    await sendMsg(prompt, /* send */ false);
+    startSession();
+  }
 });

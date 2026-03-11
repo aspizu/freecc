@@ -7,17 +7,10 @@ export const write: Tool = {
   },
 
   async execute(args: any[], body: string) {
-    // Write the diff to a temp file
     const tmpFile = `/tmp/patch_${Date.now()}.diff`;
     await Bun.write(tmpFile, body.trim());
-
-    try {
-      await $`patch -p1 < ${tmpFile}`;
-      return "Ran it.";
-    } catch (err: any) {
-      throw new Error(err.stderr?.toString());
-    } finally {
-      await $`rm -f ${tmpFile}`.quiet();
-    }
+    const response = await $`patch -p1 2>&1 < ${tmpFile}`.nothrow().text();
+    await $`rm -f ${tmpFile}`.quiet();
+    return response;
   },
 };
