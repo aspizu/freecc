@@ -11,7 +11,7 @@ const usages = (
 export const PROMPT = `\
 But I've run into a huge obstacle, I only have access to a terminal running a special
 kind of operating system, its similar to Linux, but I'm only allowed to run specific
-commands in a very special syntax.
+commands in a very special syntax. I'm only allowed to access files from the current directory, which is ${process.cwd()}
 
 To make it easier for you to help me with this special OS, lets esablish some rules:
 
