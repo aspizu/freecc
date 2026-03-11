@@ -28,6 +28,7 @@ new Elysia()
       const tool = tools[toolcall.tool];
       try {
         const msg = await tool.execute(toolcall.args, toolcall.body);
+        console.log("sending: ", msg.slice(0, 50) + "...");
         return { skipped: false, msg };
       } catch (error) {
         if (error instanceof Error) {
