@@ -23,7 +23,7 @@ async function getLastClaudeMessage() {
   );
   if (!copyButton) return null;
   copyButton.click();
-  await new Promise((resolve) => setTimeout(resolve, 250));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   return await navigator.clipboard.readText();
 }
 
