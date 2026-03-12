@@ -36,7 +36,7 @@ export function parseToolcall(msg: string): Toolcall | null {
   if (msg.startsWith("```") && msg.endsWith("```")) {
     msg = msg.slice(3, -3).trim();
   }
-  const lines = msg.split("\n");
+  const lines = msg.split(/\r?\n/);
   const tool = lines[0].slice("$toolbox.".length, msg.indexOf("("));
   let args = [];
   const argvalues = lines[0].slice(msg.indexOf("(") + 1, msg.lastIndexOf(")"));
