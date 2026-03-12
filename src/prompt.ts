@@ -46,10 +46,3 @@ export function error(message: Error | string) {
   }
   return code("I got the following error from the OS:", `error: ${message}`);
 }
-
-export function file(msg: string, lines: string[]) {
-  const colmaxlen = lines.length.toString().length;
-  return lines
-    .map((line, i) => `${(i + 1).toString().padStart(colmaxlen)} ${line}`)
-    .join("\n");
-}

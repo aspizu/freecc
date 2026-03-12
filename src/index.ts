@@ -27,6 +27,11 @@ new Elysia()
         };
       }
       try {
+        if (Array.isArray(toolcall.args)) {
+          toolcall.args = Object.fromEntries(
+            tool.args.map((arg, i) => [arg, toolcall.args[i]]),
+          );
+        }
         const msg = await tool.execute(toolcall.args, toolcall.body);
         console.log("sending: ", msg.slice(0, 50) + "...");
         return { skipped: false, msg };

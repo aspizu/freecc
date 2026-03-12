@@ -77,12 +77,14 @@ export async function applyPatch(patch: string) {
 }
 
 export const patch: Tool = {
+  args: ["path"],
+
   async usage() {
-    return "$toolbox.patch() Apply find/replace patches to a file. First line is the path, followed by one or more blocks of: `<<<<<<< SEARCH`, lines to find, `=======`, lines to replace with, `>>>>>>> REPLACE`";
+    return "$toolbox.patch(path: string) Apply find/replace patches to a file. Body must be one or more blocks of: `<<<<<<< SEARCH`, lines to find, `=======`, lines to replace with, `>>>>>>> REPLACE`";
   },
 
-  async execute(args: any[], body: string) {
-    await applyPatch(`${args[0]}\n${body}`);
+  async execute({ path }, body: string) {
+    await applyPatch(`${path}\n${body}`);
     return "Done.";
   },
 };
