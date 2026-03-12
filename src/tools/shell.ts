@@ -3,11 +3,13 @@ import { code } from "../prompt";
 import type { Tool } from "../tool";
 
 export const shell: Tool = {
+  args: [],
+
   async usage() {
     return "$toolbox.shell() Executes the bash command in body and return stdout+stderr.";
   },
 
-  async execute(args: string[], body: string) {
+  async execute({}, body: string) {
     const out = await $`bash -c ${body} 2>&1`.nothrow().text();
     const lines = out.split("\n");
     if (lines.length > 100) {
