@@ -25,14 +25,16 @@ export interface Toolcall {
 
 export function parseToolcall(msg: string): Toolcall | null {
   msg = msg.trim();
+  const toolboxIndex = msg.indexOf("$toolbox.");
+  if (toolboxIndex === -1) {
+    return null;
+  }
+  msg = msg.slice(toolboxIndex);
   if (msg.startsWith("````") && msg.endsWith("````")) {
     msg = msg.slice(4, -4).trim();
   }
   if (msg.startsWith("```") && msg.endsWith("```")) {
     msg = msg.slice(3, -3).trim();
-  }
-  if (!msg.startsWith("$toolbox.")) {
-    return null;
   }
   const lines = msg.split("\n");
   const tool = lines[0].slice("$toolbox.".length, msg.indexOf("("));
