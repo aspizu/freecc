@@ -1,5 +1,6 @@
 import { JSON5 } from "bun";
 import { glob } from "./tools/glob";
+import { patch } from "./tools/patch";
 import { read } from "./tools/read";
 import { shell } from "./tools/shell";
 import { write } from "./tools/write";
@@ -16,6 +17,7 @@ export const tools: Record<string, Tool> = {
   shell,
   read,
   write,
+  patch,
   glob,
 };
 
