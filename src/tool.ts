@@ -25,21 +25,34 @@ export interface Toolcall {
 
 export function parseToolcall(msg: string): Toolcall | null {
   msg = msg.trim();
+
   const toolboxIndex = msg.indexOf("$toolbox.");
   if (toolboxIndex === -1) {
     return null;
   }
-  msg = msg.slice(toolboxIndex);
-  if (msg.startsWith("````") && msg.endsWith("````")) {
-    msg = msg.slice(4, -4).trim();
+
+  // Check if the toolcall is wrapped in fences by scanning backwards from toolboxIndex
+  const before = msg.slice(0, toolboxIndex);
+  const fenceMatch = before.match(/(````|```)[^\n]*\n\s*$/);
+  if (fenceMatch) {
+    const fence = fenceMatch[1]; // ``` or ````
+    const fenceStart = before.lastIndexOf(fence);
+    const fenceEnd = msg.indexOf(fence, toolboxIndex);
+    if (fenceEnd !== -1) {
+      msg = msg.slice(fenceStart + fenceMatch[0].length, fenceEnd).trim();
+    }
+  } else {
+    msg = msg.slice(toolboxIndex);
   }
-  if (msg.startsWith("```") && msg.endsWith("```")) {
-    msg = msg.slice(3, -3).trim();
-  }
+
   const lines = msg.split(/\r?\n/);
-  const tool = lines[0].slice("$toolbox.".length, msg.indexOf("("));
+  const firstLine = lines[0];
+  const parenOpen = firstLine.indexOf("(");
+  const parenClose = firstLine.lastIndexOf(")");
+  const tool = firstLine.slice("$toolbox.".length, parenOpen);
+  const argvalues = firstLine.slice(parenOpen + 1, parenClose);
+
   let args = [];
-  const argvalues = lines[0].slice(msg.indexOf("(") + 1, msg.lastIndexOf(")"));
   try {
     args = JSON5.parse(`[${argvalues}]`) as any;
   } catch {
@@ -49,6 +62,7 @@ export function parseToolcall(msg: string): Toolcall | null {
       throw new Error(`Syntax error after $toolbox ${error.message}`);
     }
   }
+
   const body = lines.slice(1).join("\n");
   return { tool, args, body };
 }
