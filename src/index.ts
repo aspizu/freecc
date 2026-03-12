@@ -1,8 +1,9 @@
 import cors from "@elysiajs/cors";
 import Elysia, { t } from "elysia";
 import logixlysia from "logixlysia";
-import { PROMPT } from "./prompt";
+import { error } from "./prompt";
 import { parseToolcall, tools } from "./tool";
+import { PROMPT } from "./system";
 
 new Elysia()
   .use(cors())
@@ -14,7 +15,12 @@ new Elysia()
     "/tool",
     async (ctx) => {
       const msg = ctx.body;
-      const toolcall = parseToolcall(msg);
+      let toolcall;
+      try {
+        toolcall = parseToolcall(msg);
+      } catch (err: any) {
+        return { skipped: false, msg: error(`error: ${err.message}`) };
+      }
       console.log(toolcall);
       if (!toolcall) {
         return { skipped: true };
@@ -23,7 +29,7 @@ new Elysia()
       if (!tool) {
         return {
           skipped: false,
-          msg: `I got the following error from the OS:\n\`\`\`\nerror: ${toolcall.tool} is not a valid tool.\n\`\`\``,
+          msg: error(`error: $toolbox.${toolcall.tool}() is not a valid tool.`),
         };
       }
       try {
@@ -35,11 +41,11 @@ new Elysia()
         const msg = await tool.execute(toolcall.args, toolcall.body);
         console.log("sending: ", msg.slice(0, 50) + "...");
         return { skipped: false, msg };
-      } catch (error) {
-        if (error instanceof Error) {
+      } catch (err) {
+        if (err instanceof Error) {
           return {
             skipped: false,
-            msg: `I got the following error from the OS:\n\`\`\`\nerror: ${error.message}\nusage: ${await tool.usage()}\n\`\`\``,
+            msg: error(`error: ${err.message}\nusage: ${await tool.usage()}`),
           };
         }
       }

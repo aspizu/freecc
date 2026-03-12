@@ -1,3 +1,4 @@
+import { JSON5 } from "bun";
 import { read } from "./tools/read";
 import { shell } from "./tools/shell";
 import { write } from "./tools/write";
@@ -38,10 +39,10 @@ export function parseToolcall(msg: string): Toolcall | null {
   let args = [];
   const argvalues = lines[0].slice(msg.indexOf("(") + 1, msg.lastIndexOf(")"));
   try {
-    args = JSON.parse(`[${argvalues}]`);
+    args = JSON5.parse(`[${argvalues}]`) as any;
   } catch {
     try {
-      args = JSON.parse(`{${argvalues}}`);
+      args = JSON5.parse(`{${argvalues}}`) as any;
     } catch (error: any) {
       throw new Error(`Syntax error after $toolbox ${error.message}`);
     }
