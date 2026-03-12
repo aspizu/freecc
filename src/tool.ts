@@ -1,4 +1,5 @@
 import { JSON5 } from "bun";
+import { glob } from "./tools/glob";
 import { read } from "./tools/read";
 import { shell } from "./tools/shell";
 import { write } from "./tools/write";
@@ -15,6 +16,7 @@ export const tools: Record<string, Tool> = {
   shell,
   read,
   write,
+  glob,
 };
 
 export interface Toolcall {
@@ -31,7 +33,6 @@ export function parseToolcall(msg: string): Toolcall | null {
     return null;
   }
 
-  // Check if the toolcall is wrapped in fences by scanning backwards from toolboxIndex
   const before = msg.slice(0, toolboxIndex);
   const fenceMatch = before.match(/(````|```)[^\n]*\n\s*$/);
   if (fenceMatch) {
