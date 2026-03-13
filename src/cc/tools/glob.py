@@ -1,7 +1,13 @@
-from pathlib import Path
+from asyncio.subprocess import PIPE, create_subprocess_exec
+from shutil import which
 
-from ..chat import Chat
+from ..chat import Chat, ChatError
 from ..tool import Tool
+
+fd_ = which("fd") or which("fdfind")
+if fd_ is None:
+    raise RuntimeError("the `fd` command is required for the glob tool.")
+fd = fd_
 
 
 class Glob(Tool):
@@ -10,10 +16,15 @@ class Glob(Tool):
     glob: str
 
     async def run(self) -> Chat | None:
-        cwd = Path.cwd()
-        xs = [*cwd.glob(self.glob)]
-        xs.sort()
+        if (
+            self.glob.startswith("/")
+            or self.glob.startswith("./")
+            or self.glob.startswith("../")
+        ):
+            raise ChatError("glob must be relative to current workspace")
+        p = await create_subprocess_exec(fd, "-E", ".git", "-g", self.glob, stdout=PIPE)
+        stdout, _ = await p.communicate()
         return Chat(
             thought="I got the following output from the terminal:",
-            code="\n".join(map(str, xs)),
+            code=stdout.decode(),
         )
