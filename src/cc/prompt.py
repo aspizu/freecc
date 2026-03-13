@@ -22,7 +22,7 @@ To make it easier for you to help me, lets establish some ground rules:
 All tool calls should be in markdown code blocks:
 
 ```
-$freecc.tool(args)
+$freecc.addition(num1: 100, num2: 200)
 ...body of tool call
 ```
 
