@@ -8,7 +8,7 @@ class Read(Tool):
     """(path: string, start: number = 1, limit: number = 200) -- Read a file."""
 
     path: str
-    start: int = 0
+    start: int = 1
     limit: int = 200
 
     async def run(self) -> Chat | None:
@@ -25,7 +25,9 @@ class Read(Tool):
         except PermissionError:
             raise ChatError("permission denied")
 
+        start_idx = self.start - 1
+        end_idx = start_idx + self.limit
         return Chat(
-            thought=f"Lines {self.start}..{min(self.start + self.limit, len(lines))} of {len(lines)}:",
-            code="\n".join(lines[self.start - 1 : (self.start - 1) + self.limit]),
+            thought=f"Lines {self.start}..{min(end_idx, len(lines))} of {len(lines)}:",
+            code="\n".join(lines[start_idx:end_idx]),
         )
