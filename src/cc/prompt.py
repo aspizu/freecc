@@ -26,7 +26,7 @@ $freecc.tool(args)
 ...body of tool call
 ```
 
-The body may be multiple lines or empty.
+The body may be multiple lines or empty. Arguments must be keyword with values in JSON5 format.
 
 ### Available Tools:
 {"\n".join(f" - {tool.usage()}" for tool in tools.values())}
