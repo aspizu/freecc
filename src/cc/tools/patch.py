@@ -69,9 +69,12 @@ class Patch(Tool):
         if not self.body:
             raise ChatError("body is empty")
         edits = parse_search_replace(self.body)
+        if not edits:
+            raise ChatError("no valid SEARCH/REPLACE blocks found in body")
         original = path.read_text()
         for edit in edits:
             if original.find(edit.search) == -1:
                 raise ChatError("search string not found")
             original = original.replace(edit.search, edit.replace, count=1)
+        path.write_text(original)
         return Chat(thought="Done.")
