@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from ..chat import Chat, ChatError
+from ..check import check_file
 from ..tool import Tool
 
 
@@ -23,4 +24,4 @@ class Write(Tool):
             raise ChatError("file not found")
         except PermissionError:
             raise ChatError("permission denied")
-        return Chat(thought="Done.")
+        return Chat(thought="Done.", code=await check_file(str(path)))

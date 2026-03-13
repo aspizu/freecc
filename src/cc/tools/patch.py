@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..chat import Chat, ChatError
+from ..check import check_file
 from ..tool import Tool
 
 
@@ -77,4 +78,4 @@ class Patch(Tool):
                 raise ChatError("search string not found")
             original = original.replace(edit.search, edit.replace, count=1)
         path.write_text(original)
-        return Chat(thought="Done.")
+        return Chat(thought="Done.", code=await check_file(str(path)))
