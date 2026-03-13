@@ -13,6 +13,7 @@ access files in the current directory, which is {Path.cwd()}.
 To make it easier for you to help me, lets establish some ground rules:
 
  - You may instruct me to issue tool calls in chat, I will execute them for you and respond with it's output.
+ - Only one tool call per chat message.
  - Do not perform web searches or ask me multiple-choice questions. I am in a hurry, I need to get this job done as soon as possible.
  - You should write the tool calls in the specified format because I am going to copy-paste your messages directly into the terminal window.
  - When the task is completed, you should respond with done.
