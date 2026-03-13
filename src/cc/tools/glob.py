@@ -1,4 +1,5 @@
 from asyncio.subprocess import PIPE, create_subprocess_exec
+from pathlib import Path
 from shutil import which
 
 from ..chat import Chat, ChatError
@@ -16,13 +17,16 @@ class Glob(Tool):
     glob: str
 
     async def run(self) -> Chat | None:
+        glob = Path.cwd().joinpath(self.glob or "**/*")
         if (
             self.glob.startswith("/")
             or self.glob.startswith("./")
             or self.glob.startswith("../")
         ):
             raise ChatError("glob must be relative to current workspace")
-        p = await create_subprocess_exec(fd, "-E", ".git", "-g", self.glob, stdout=PIPE)
+        p = await create_subprocess_exec(
+            fd, "-E", ".git", "-p", "-g", glob, stdout=PIPE
+        )
         stdout, _ = await p.communicate()
         return Chat(
             thought="I got the following output from the terminal:",

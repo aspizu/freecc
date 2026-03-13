@@ -1,4 +1,5 @@
 from asyncio.subprocess import PIPE, create_subprocess_exec
+from pathlib import Path
 from shutil import which
 
 from ..chat import Chat, ChatError
@@ -21,6 +22,7 @@ class Grep(Tool):
     glob: str | None = None
 
     async def run(self) -> Chat | None:
+        glob = Path.cwd().joinpath(self.glob or "**/*")
         if self.glob and (
             self.glob.startswith("/")
             or self.glob.startswith("./")
@@ -31,8 +33,9 @@ class Grep(Tool):
             fd,
             "-E",
             ".git",
+            "-p",
             "-g",
-            self.glob or "**/*",
+            glob,
             "-X",
             rg,
             self.pattern,
