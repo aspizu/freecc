@@ -1,170 +1,295 @@
 // ==UserScript==
-// @name        FreeCC
-// @namespace   Violentmonkey Scripts
-// @match       https://claude.ai/*
-// @icon        https://claude.ai/favicon.ico
-// @grant       none
-// @version     1.0
-// @author      -
-// @description FreeCC turns Claude Web into Claude Code
+// @name         FreeCC
+// @namespace    https://github.com/aspizu/freecc
+// @match        https://claude.ai/*
+// @icon         https://claude.ai/favicon.ico
+// @grant        none
+// @license      MIT
+// @version      1.0
+// @description  Turn Claude Web into Claude Code
+// @author       Priyanshu Dangare <hello@aspiz.uk>
 // ==/UserScript==
 
 // @ts-check
 
-async function getLastClaudeMessage() {
-  const lastMessage = [
-    ...document.querySelectorAll(
-      '[data-is-streaming="false"] > .font-claude-response',
-    ),
-  ].at(-1)?.parentNode?.parentNode?.parentNode;
-  /** @type {HTMLButtonElement | null | undefined} */
-  const copyButton = lastMessage?.querySelector(
-    '[data-testid="action-bar-copy"]',
-  );
-  if (!copyButton) return null;
-  copyButton.click();
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return await navigator.clipboard.readText();
-}
-
-/** @type {string | null} */
-let lastMsg = null;
-/** @type {ReturnType<typeof setInterval> | null} */
-let intervalId = null;
-/** @type {boolean} */
-let isRunning = false;
-
-function startSession() {
-  intervalId = setInterval(async () => {
-    const msg = await getLastClaudeMessage();
-    if (msg && msg != lastMsg) {
-      onMessage(msg);
-    }
-    lastMsg = msg;
-  }, 5000);
-  isRunning = true;
-  updateButton();
-}
-
-function stopSession() {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-  isRunning = false;
-  updateButton();
-}
-
-function updateButton() {
-  const btn = document.getElementById("freecc-init");
-  if (!btn) return;
-  btn.classList.toggle("running", isRunning);
-  btn.textContent = isRunning ? "Stop FreeCC" : "Start FreeCC";
+/**
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
+async function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /**
- * @param {string} text
- * @param {boolean} send
+ * @template T
+ * @param {T|null|undefined} value
+ * @returns {T}
  */
-async function sendMsg(text, send = true) {
-  /** @type {HTMLDivElement | null} */
-  const chatbox = document.querySelector('[data-testid="chat-input"]');
-  if (!chatbox) {
-    console.error("[FreeCC]: failed to send message, chatbox not found.");
-    return;
-  }
-  chatbox.focus();
-  document.execCommand("insertText", false, text);
-  if (send) {
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    /** @type {HTMLButtonElement | null} */
-    const sendButton = document.querySelector('[aria-label="Send message"]');
+function bang(value) {
+    if (value === null || value === undefined) {
+        throw new Error("Value is null or undefined")
+    }
+    return value
+}
+
+async function getLastClaudeMessage() {
+    const div = [
+        ...document.querySelectorAll(
+            '[data-is-streaming="false"] > .font-claude-response',
+        ),
+    ].at(-1)?.parentElement?.parentElement?.parentElement
+    if (!div) {
+        console.error("[freecc]: Could not find last message")
+        return null
+    }
+    /** @type {HTMLButtonElement|null} */
+    const copyButton = div.querySelector('[data-testid="action-bar-copy"]')
+    if (!copyButton) {
+        console.error("[freecc]: Could not find copy button")
+        return null
+    }
+    copyButton.click()
+    await sleep(500)
+    return await navigator.clipboard.readText()
+}
+
+/**
+ * Inserts text into the chat input without sending.
+ * @param {string} message
+ */
+async function insertTextIntoClaude(message) {
+    /** @type {HTMLDivElement|null} */
+    const div = document.querySelector('[data-testid="chat-input"]')
+    if (!div) {
+        console.error("[freecc]: Could not find chat input")
+        return null
+    }
+    div.focus()
+    document.execCommand("insertText", false, message)
+}
+
+/**
+ * Inserts text into the chat input and sends it.
+ * @param {string} message
+ */
+async function sendMessageToClaude(message) {
+    await insertTextIntoClaude(message)
+    await sleep(500)
+    /** @type {HTMLButtonElement|null} */
+    const sendButton = document.querySelector('[aria-label="Send message"]')
     if (!sendButton) {
-      console.error("[FreeCC]: failed to send message, send button not found.");
-      return;
+        console.error("[freecc]: Could not find send button")
+        return null
     }
-    sendButton.click();
-  }
+    sendButton.click()
 }
 
-/** @param {string} msg  */
-async function onMessage(msg) {
-  const res = await fetch("http://localhost:3000/tool", {
-    method: "POST",
-    body: msg,
-  });
-
-  if (!res.ok) {
-    console.error(
-      "[FreeCC]: failed to call tool: ",
-      res.status,
-      res.statusText,
-    );
-    return;
-  }
-
-  const response = await res.json();
-
-  if (response.skipped) {
-    return;
-  }
-
-  await sendMsg(response.msg);
+async function getSystemPrompt() {
+    const res = await fetch("http://localhost:3000/system-prompt")
+    if (!res.ok) {
+        console.error("[freecc]: Failed to fetch system prompt")
+        return null
+    }
+    return await res.text()
 }
 
-const div = document.createElement("div");
-document.body.append(div);
+/**
+ * @param {string} message
+ * @returns {Promise<string|null>}
+ */
+async function getMessageResponse(message) {
+    setReceiving(true)
+    const res = await fetch("http://localhost:3000/receive-message", {
+        method: "POST",
+        body: message,
+    })
+    setReceiving(false)
+    if (!res.ok) {
+        console.error("[freecc]: Failed to receive message")
+        return null
+    }
+    return await res.json()
+}
 
-div.innerHTML = `
+/** @type {string|null} */
+let lastMessage = null
+
+/** @type {boolean} */
+let running = false
+
+/** @type {number|null} */
+let interval = null
+
+function startSession() {
+    if (running) {
+        console.error("[freecc]: Session already running")
+        return
+    }
+    running = true
+    interval = setInterval(poll, 2000)
+}
+
+function stopSession() {
+    if (interval) {
+        clearInterval(interval)
+        interval = null
+    }
+    running = false
+    setReceiving(false)
+}
+
+async function poll() {
+    const message = await getLastClaudeMessage()
+    if (message == lastMessage) {
+        return
+    }
+    lastMessage = message
+    if (!message) {
+        return
+    }
+    const response = await getMessageResponse(message)
+    if (!response) {
+        stopSession()
+        return
+    }
+    await sendMessageToClaude(response)
+}
+
+/** @type {HTMLDivElement} */
+const div = document.createElement("div")
+
+div.innerHTML = `\
 <style>
-  #freecc-toolbar {
-    position: fixed;
-    z-index: 99999999;
-    bottom: 0;
-    right: 0;
-    padding: 4px 6px;
-    background: rgba(15, 15, 15, 0.85);
-    backdrop-filter: blur(8px);
-    border-top-left-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-right: none;
-    border-bottom: none;
-    font-family: monospace;
-  }
+    #freecc-toolbar {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #1a1a1a;
+        border: 1px solid #2e2e2e;
+        border-radius: 8px;
+        padding: 6px 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
 
-  #freecc-init {
-    padding: 3px 8px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 4px;
-    cursor: pointer;
-    color: #aaa;
-    font-family: monospace;
-    font-size: 11px;
-    letter-spacing: 0.03em;
-    transition: background 0.2s, color 0.2s;
-    &:hover {
-      background: rgba(255,255,255,0.12);
+    #freecc-status {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #3a3a3a;
+        flex-shrink: 0;
+        transition: background 0.2s, box-shadow 0.2s;
     }
-    &.running {
-      background: rgba(34, 197, 94, 0.15);
-      border-color: rgba(34, 197, 94, 0.4);
-      color: #22c55e;
+
+    #freecc-status.running {
+        background: #4ade80;
+        box-shadow: 0 0 4px #4ade80;
     }
-  }
+
+    #freecc-status.receiving {
+        background: transparent;
+        border: 2px solid #facc15;
+        border-top-color: transparent;
+        animation: freecc-spin 0.7s linear infinite;
+        box-shadow: none;
+    }
+
+    @keyframes freecc-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    #freecc-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: #888;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    .freecc-btn {
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        color: #ccc;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+    }
+
+    #freecc-btn.running {
+        color: #f87171;
+        border-color: #3f2020;
+        background: #2a1a1a;
+    }
+
+    #freecc-sysprompt-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
 </style>
 <div id="freecc-toolbar">
-  <button id="freecc-init">Start FreeCC</button>
-</div>
-`;
+    <div id="freecc-status"></div>
+    <span id="freecc-label">FreeCC</span>
+    <button id="freecc-sysprompt-btn" class="freecc-btn">System Prompt</button>
+    <button id="freecc-btn" class="freecc-btn">Start</button>
+</div>`
 
-document.getElementById("freecc-init")?.addEventListener("click", async () => {
-  if (isRunning) {
-    stopSession();
-  } else {
-    const response = await fetch("http://localhost:3000/init");
-    const prompt = await response.text();
-    await sendMsg(prompt, /* send */ false);
-    startSession();
-  }
-});
+document.body.appendChild(div)
+
+/** @type {HTMLButtonElement} */
+const btn = bang(
+    /** @type {HTMLButtonElement|null} */ (document.querySelector("#freecc-btn")),
+)
+const status_ = bang(document.querySelector("#freecc-status"))
+const sysPromptBtn = bang(
+    /** @type {HTMLButtonElement|null} */ (
+        document.querySelector("#freecc-sysprompt-btn")
+    ),
+)
+
+/**
+ * Toggles the spinning "receiving" state on the status indicator.
+ * @param {boolean} active
+ */
+function setReceiving(active) {
+    if (active) {
+        status_.classList.add("receiving")
+        status_.classList.remove("running")
+    } else {
+        status_.classList.remove("receiving")
+        if (running) status_.classList.add("running")
+    }
+}
+
+sysPromptBtn.addEventListener("click", async () => {
+    sysPromptBtn.disabled = true
+    sysPromptBtn.innerText = "Fetching…"
+    const prompt = await getSystemPrompt()
+    if (prompt) {
+        await insertTextIntoClaude(prompt) // insert only, no send
+    } else {
+        console.error("[freecc]: Could not fetch system prompt")
+    }
+    sysPromptBtn.innerText = "System Prompt"
+    sysPromptBtn.disabled = false
+})
+
+btn.addEventListener("click", () => {
+    if (running) {
+        stopSession()
+        btn.innerText = "Start"
+        btn.classList.remove("running")
+        status_.classList.remove("running")
+    } else {
+        startSession()
+        btn.innerText = "Stop"
+        btn.classList.add("running")
+        status_.classList.add("running")
+    }
+})
