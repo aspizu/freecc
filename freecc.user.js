@@ -84,13 +84,14 @@ async function sendMessageToClaude(message) {
     sendButton.click()
 }
 
+/** @returns {Promise<string|null>} */
 async function getSystemPrompt() {
     const res = await fetch("http://localhost:3000/system-prompt")
     if (!res.ok) {
         console.error("[freecc]: Failed to fetch system prompt")
         return null
     }
-    return await res.text()
+    return await res.json()
 }
 
 /**
