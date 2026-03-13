@@ -2,7 +2,8 @@ from pathlib import Path
 
 from .tools import tools
 
-SYSTEM_PROMPT = f"""\
+SYSTEM_PROMPT = f"""
+
 ---
 
 I want to achieve this goal, but I've run into a huge obstacle, I only have
