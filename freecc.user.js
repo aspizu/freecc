@@ -128,6 +128,9 @@ function startSession() {
     }
     running = true
     interval = setInterval(poll, 2000)
+    btn.innerText = "Stop"
+    btn.classList.add("running")
+    status_.classList.add("running")
 }
 
 function stopSession() {
@@ -137,6 +140,9 @@ function stopSession() {
     }
     running = false
     setReceiving(false)
+    btn.innerText = "Start"
+    btn.classList.remove("running")
+    status_.classList.remove("running")
 }
 
 async function poll() {
@@ -284,13 +290,7 @@ sysPromptBtn.addEventListener("click", async () => {
 btn.addEventListener("click", () => {
     if (running) {
         stopSession()
-        btn.innerText = "Start"
-        btn.classList.remove("running")
-        status_.classList.remove("running")
     } else {
         startSession()
-        btn.innerText = "Stop"
-        btn.classList.add("running")
-        status_.classList.add("running")
     }
 })
