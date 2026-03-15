@@ -1,8 +1,13 @@
 from pathlib import Path
-
 from .tools import tools
-
-SYSTEM_PROMPT = f"""
+_agents_md_text = ""
+for path in ("AGENTS.md", "CLAUDE.md", "agents.md", "claude.md"):
+    try:
+        _agents_md_text = Path(path).read_text() + chr(10)
+        break
+    except (FileNotFoundError, IsADirectoryError):
+        pass
+SYSTEM_PROMPT = f"""{_agents_md_text}
 
 ---
 
